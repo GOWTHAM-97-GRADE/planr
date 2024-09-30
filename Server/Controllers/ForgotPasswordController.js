@@ -35,13 +35,14 @@ const sendResetPIN = async (req, res) => {
   }
 };
 
+// Reset password function
 const resetPassword = async (req, res) => {
   const { email, pin, password } = req.body;
 
   try {
     // Check if the email and pin match a valid entry in ForgotPasswordModel
     const pinEntry = await ForgotPasswordModel.findOne({ email, token: pin });
-    
+
     // Check if pinEntry exists and whether the pin has expired
     if (!pinEntry || pinEntry.expiresAt < Date.now()) {
       return res.status(400).json({ message: "Invalid or expired PIN" });

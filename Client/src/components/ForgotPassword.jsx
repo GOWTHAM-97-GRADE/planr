@@ -1,5 +1,19 @@
-import { Signup, PrimaryButton } from './Utility';
+import { Signup } from './Utility'; // Removed PrimaryButton from here
 import { useState } from 'react';
+import styled from 'styled-components'; // Added styled-components
+
+// Styled PrimaryButton using styled-components
+const PrimaryButton = styled.button`
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  &:hover {
+    background-color: #0056b3;
+  }
+`;
 
 function ForgotPassword({ setAuth, setLForm, setForgotPass }) {
   const [sform, setSForm] = useState({
@@ -8,11 +22,10 @@ function ForgotPassword({ setAuth, setLForm, setForgotPass }) {
     password: '',
   });
 
-  const [isOTPRequested, setOTPRequested] = useState(false); // State to handle OTP request
-  const [errorMessage, setErrorMessage] = useState(''); // State for error messages
-  const [successMessage, setSuccessMessage] = useState(''); // State for success messages
+  const [isOTPRequested, setOTPRequested] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
-  // Handle input changes
   const handleChangeS = (e) => {
     const { name, value } = e.target;
     setSForm((prevData) => ({
@@ -32,8 +45,8 @@ function ForgotPassword({ setAuth, setLForm, setForgotPass }) {
       const result = await response.json();
       if (response.ok) {
         setSuccessMessage('OTP sent to your email');
-        setOTPRequested(true); // Mark OTP as requested
-        setErrorMessage(''); // Clear any previous errors
+        setOTPRequested(true);
+        setErrorMessage('');
       } else {
         setErrorMessage(result.message || 'Error sending OTP');
         setSuccessMessage('');
@@ -59,23 +72,28 @@ function ForgotPassword({ setAuth, setLForm, setForgotPass }) {
         }),
       });
 
-      const result = await response.json();  // Parse the JSON response
+      const result = await response.json();
       if (response.ok) {
         setSuccessMessage('Password reset successful');
-        // Redirect or handle login form here
-        setErrorMessage(''); // Clear error message
-        setLForm(true); // Optionally switch back to login form
+        setErrorMessage('');
+        // Redirect to login after successful password reset
+        setLForm(true);
       } else {
         setErrorMessage(result.message || 'Error resetting password');
-        setSuccessMessage(''); // Clear success message if error
+        setSuccessMessage('');
       }
     } catch (error) {
       setErrorMessage('Error resetting password');
-      setSuccessMessage(''); // Clear success message if error
+      setSuccessMessage('');
     }
   };
 
-  // Styling for the form
+  // Go back to login if password reset is canceled or completed
+  const redirectToLogin = () => {
+    setLForm(true);
+    setForgotPass(false);
+  };
+
   const styles = {
     form: {
       display: 'flex',
@@ -100,9 +118,6 @@ function ForgotPassword({ setAuth, setLForm, setForgotPass }) {
       borderRadius: '4px',
       fontSize: '16px',
     },
-    button: {
-      alignSelf: 'flex-start',
-    },
     message: {
       color: 'green',
     },
@@ -116,7 +131,7 @@ function ForgotPassword({ setAuth, setLForm, setForgotPass }) {
       {errorMessage && <div style={{ color: 'red' }}>{errorMessage}</div>}
       {/* Display success messages */}
       {successMessage && <div style={styles.message}>{successMessage}</div>}
-      
+
       <form onSubmit={resetPassword} style={styles.form}>
         <div style={styles.formGroup}>
           <label htmlFor="email" style={styles.label}>Email:</label>
@@ -133,7 +148,7 @@ function ForgotPassword({ setAuth, setLForm, setForgotPass }) {
 
         {/* Show "Send mail" button if OTP hasn't been requested yet */}
         {!isOTPRequested && (
-          <PrimaryButton onClick={requestOTP} style={styles.button}>
+          <PrimaryButton onClick={requestOTP} type="button">
             Send mail
           </PrimaryButton>
         )}
@@ -167,11 +182,16 @@ function ForgotPassword({ setAuth, setLForm, setForgotPass }) {
               />
             </div>
 
-            <PrimaryButton type="submit" style={styles.button}>
+            <PrimaryButton type="submit">
               Reset password
             </PrimaryButton>
           </>
         )}
+
+        {/* Cancel and go back to login page */}
+        <PrimaryButton onClick={redirectToLogin} type="button">
+          Return to Login Page
+        </PrimaryButton>
       </form>
     </Signup>
   );
