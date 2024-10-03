@@ -78,19 +78,10 @@ const ToggleLink = styled.button`
 `;
 
 function LoginPage({ setAuth, isForgotPass, setForgotPass }) {
-  const [lform, setLForm] = useState({
-    email: "",
-    password: ""
-  });
-
-  const [sform, setSForm] = useState({
-    name: "",
-    email: "",
-    password: "",
-    confirmPassword: ""
-  });
-
+  const [lform, setLForm] = useState({ email: "", password: "" });
+  const [sform, setSForm] = useState({ name: "", email: "", password: "", confirmPassword: "" });
   const [isSignup, setSignup] = useState(false);
+  const [isLoading, setLoading] = useState(false);
 
   const handleChangeS = (e) => {
     const { name, value } = e.target;
@@ -110,67 +101,72 @@ function LoginPage({ setAuth, isForgotPass, setForgotPass }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
-    // Signup Form Validation
-    if (isSignup) {
+    try {
+      let response;
+      if (isSignup) {
+        // Signup Form Validation
+        if (!sform.name || !sform.email || !sform.password || !sform.confirmPassword) {
+          alert("All fields are required for signup");
+          setLoading(false);
+          return;
+        }
 
-      if (!sform.name || !sform.email || !sform.password || !sform.confirmPassword) {
-        alert("All fields are required for signup");
-        return;
+        if (sform.password !== sform.confirmPassword) {
+          alert("Passwords do not match!");
+          setLoading(false);
+          return;
+        }
+
+        response = await fetch("http://localhost:5000/signup", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: sform.name,
+            email: sform.email,
+            password: sform.password,
+            confirmPassword: sform.confirmPassword,
+          }),
+        });
+      } else {
+        // Login Form Validation
+        if (!lform.email || !lform.password) {
+          alert("Email and password are required for login");
+          setLoading(false);
+          return;
+        }
+
+        response = await fetch("http://localhost:5000/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: lform.email,
+            password: lform.password,
+          }),
+        });
       }
-
-      if (sform.password !== sform.confirmPassword) {
-        alert("Passwords do not match!");
-        return;
-      }
-
-      const response = await fetch("http://localhost:5000/signup", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: sform.name,
-          email: sform.email,
-          password: sform.password,
-          confirmPassword:sform.confirmPassword,
-        }),
-      });
 
       const result = await response.json();
       if (response.ok) {
-        alert("Signup successful");
+        if (result.token) {
+          localStorage.setItem('e-comToken', result.token);  // Store token
+        }
+        alert(isSignup ? "Signup successful" : "Login successful");
         setAuth(true);
         setForgotPass(false);
       } else {
-        alert(result.message || "Error in signup");
+        alert(result.message || "Error in authentication");
       }
-    } else {
-      // Login Form Validation
-      if (!lform.email || !lform.password) {
-        alert("Email and password are required for login");
-        return;
-      }
-
-      const response = await fetch("http://localhost:5000/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: lform.email,
-          password: lform.password,
-        }),
-      });
-
-      const result = await response.json();
-      if (response.ok) {
-        alert("Login successful");
-        setAuth(true);
-        setForgotPass(false);
-      } else {
-        alert(result.message || "Invalid login credentials");
-      }
+    } catch (error) {
+      alert("An error occurred. Please try again.");
+      console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -237,7 +233,9 @@ function LoginPage({ setAuth, isForgotPass, setForgotPass }) {
                     style={styles.input}
                   />
                 </div>
-                <PrimaryButton type="submit" style={styles.button}>Login</PrimaryButton>
+                <PrimaryButton type="submit" style={styles.button} disabled={isLoading}>
+                  {isLoading ? 'Logging in...' : 'Login'}
+                </PrimaryButton>
                 <SecondaryButton onClick={() => setForgotPass(true)}>Forgot Password</SecondaryButton>
               </form>
               <ToggleLink onClick={() => setSignup(true)}>Don't have an account? Signup</ToggleLink>
@@ -291,7 +289,9 @@ function LoginPage({ setAuth, isForgotPass, setForgotPass }) {
                     style={styles.input}
                   />
                 </div>
-                <PrimaryButton type="submit" style={styles.button}>Signup</PrimaryButton>
+                <PrimaryButton type="submit" style={styles.button} disabled={isLoading}>
+                  {isLoading ? 'Signing up...' : 'Signup'}
+                </PrimaryButton>
               </form>
               <ToggleLink onClick={() => setSignup(false)}>Already have an account? Login</ToggleLink>
             </div>

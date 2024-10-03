@@ -129,5 +129,22 @@ const editProfile = async (req, res) => {
         return res.status(500).json({ message: "Internal Server Error" });
     }
 };
+const deleteAccount = async (req, res) => {
+    console.log("User ID from token:", req.user.id);
+    try {
+        const userId = req.user.id;
+        const deletedUser = await AuthModel.findByIdAndDelete(userId);
 
-module.exports = { login, signup, logout, editProfile };
+        if (!deletedUser) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        res.clearCookie("e-comToken");
+        return res.status(200).json({ message: "Account deleted successfully" });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+module.exports = { signup, login, logout, editProfile, deleteAccount };
